@@ -1,0 +1,322 @@
+//Source: view-source:https://ramp.com/
+
+<script type="d715201b5fb4fc3e44d931c3-text/javascript">
+  const arcsData = [
+    {
+      startLat: 40.7128,
+      startLng: -73.935242,
+      endLat: 51.5072,
+      endLng: -0.1276
+    },
+    {
+      startLat: 35.6762,
+      startLng: 139.65,
+      endLat: 34.0522,
+      endLng: -118.2437
+    },
+    {
+      startLat: 41.8781,
+      startLng: -87.6298,
+      endLat: 59.3293,
+      endLng: 18.0686
+    },
+    {
+      startLat: 43.6532,
+      startLng: -79.3832,
+      endLat: 19.4326,
+      endLng: -99.1332
+    },
+    {
+      startLat: 39.9042,
+      startLng: 116.4074,
+      endLat: 28.6139,
+      endLng: 77.2090
+    },
+    {
+      startLat: 33.8938,
+      startLng: 35.5018,
+      endLat: 40.7128,
+      endLng: -73.935242
+    },
+    {
+      startLat: 36.1716,
+      startLng: -115.1391,
+      endLat: 33.8938,
+      endLng: 35.5018
+    }
+  ];
+
+  fetch("https://assets.ramp.com/webflow/countries.min.json")
+    .then((res) => res.json())
+    .then((countries) => {
+    const world = Globe({
+      animateIn: false
+    })(document.getElementById("sc-globe-block__globe"))
+    .globeImageUrl(
+      "https://assets-global.website-files.com/5f8dd056c51c1d04c3eaa497/622ba161e766603c20437a38_dark-grey.jpg"
+    )
+    .hexPolygonsData(countries.features)
+    .hexPolygonResolution(3)
+    .hexPolygonMargin(0.65)
+    .hexPolygonColor(() => `#fff`)
+    .arcsData(arcsData)
+    .arcColor(() => `#ffff33`)
+    .arcDashLength(() => 1)
+    .arcDashGap(() => 0.65)
+    .arcDashAnimateTime(() => Math.random() * 3000 + 700)
+    .backgroundColor("rgba(0,0,0,0)")
+    .atmosphereAltitude("0")
+    .onGlobeReady(function () {
+      document.getElementById("sc-globe-block__globe").style.opacity = 1;
+    })
+    .enablePointerInteraction(false);
+
+    world.controls().enableZoom = false;
+    world.controls().autoRotate = true;
+    world.controls().autoRotateSpeed = 0.35;
+    world.controls().minPolarAngle = 0.85;
+    world.controls().maxPolarAngle = 0.85;
+    world.camera().zoom = 1.15;
+
+    var multiplier = 1.8;
+    var multiplierMobile = 1.2;
+    var globeParent = document.getElementById("sc-globe-block");
+
+    function setGlobeDimensions() {
+      if (window.innerWidth > 767) {
+        world.width([globeParent.offsetWidth * multiplier]);
+        world.height([globeParent.offsetHeight * multiplier]);
+        world.controls().enabled = true;
+        world.camera().zoom = 1.15;
+      } else {
+        world.width([globeParent.offsetWidth * multiplierMobile]);
+        world.height([globeParent.offsetHeight * multiplierMobile]);
+        world.controls().enabled = false;
+        world.camera().zoom = 1.05;
+      }
+    }
+
+    setGlobeDimensions();
+
+    window.addEventListener("resize", () => {
+      setGlobeDimensions();
+    });
+  });
+
+  /* global $, gsap, Waypoint  */
+
+  const rampHomepageTabs = {
+    init () {
+      // Times are set in seconds
+      const cycleInterval = 5
+      let accordionAnimationDuration
+      const accordionAnimationDurationDesktop = 0.6
+      const accordionAnimationDurationTablet = 1.6
+      const imageAnimationDuration = 1.2
+      let isTransitioning = false
+      let timer
+      gsap.ticker.lagSmoothing(false)
+
+      const menuWrapper = $('#homepage-tabs__menu-wrapper')
+      const referenceQueue = $('[tabs-menu-item]').toArray()
+      let queue = createQueue(1)
+
+      setDurations()
+      setMinHeights()
+      $(window).resize(setDurations)
+      $(window).resize(setMinHeights)
+      animateMenuIn()
+      startTimer()
+
+      $('[tabs-menu-item]').click(function (e) {
+        if (!$(this).hasClass('active')) {
+          e.preventDefault()
+          if (!isTransitioning) {
+            // Create new queue, create new timer
+            const index = $(this).attr('tabs-menu-item')
+            queue = createQueue(index)
+            selectMenuItem($(this))
+            clearInterval(timer)
+            timer = setInterval(moveQueue, cycleInterval * 1000)
+          }
+        } else if ($(window).width() > 991) {
+          window.location.href = $(this).data('href')
+        }
+      })
+
+      function startTimer () {
+        if (!timer) {
+          timer = setInterval(moveQueue, cycleInterval * 1000)
+        }
+        // Loader Bar In
+        gsap.to("[tabs-menu-item].active [tabs-menu-element='loader-bar']", {
+          width: '100%',
+          duration: cycleInterval,
+          ease: 'none'
+        })
+      }
+
+      function animateMenuIn () {
+        gsap.to('#tabs-menu', {
+          opacity: 1,
+          y: 0,
+          duration: imageAnimationDuration,
+          ease: 'power4.out'
+        })
+      }
+
+      function selectMenuItem (item) {
+        isTransitioning = true
+        $(item).addClass('active')
+        $('[tabs-menu-item]').not(item).removeClass('active')
+        openAccordionItem(item)
+        closeSiblingAccordionItems(item)
+        setTimeout(function () {
+          isTransitioning = false
+        }, imageAnimationDuration * 1000)
+      }
+
+      function setMinHeights () {
+        const width = $(window).width()
+        const menuItemHeight = $(
+          '[tabs-menu-item].active .homepage-tabs__menu-item-grid'
+        ).height()
+        if (width > 991) {
+          menuWrapper.css('min-height', 464)
+        } else {
+          menuWrapper.css('min-height', menuItemHeight + 240)
+        }
+      }
+
+      function setDurations () {
+        const width = $(window).width()
+        if (width > 991) {
+          accordionAnimationDuration = accordionAnimationDurationDesktop
+        } else {
+          accordionAnimationDuration = accordionAnimationDurationTablet
+        }
+      }
+
+      function openAccordionItem (item) {
+        const itemIndex = item.attr('tabs-menu-item')
+
+        gsap.to('[tabs-menu-item].active', {
+          height: 'auto',
+          duration: accordionAnimationDuration,
+          ease: 'power4.out'
+        })
+
+        gsap.to("[tabs-menu-item].active [tabs-menu-element='tab-content']", {
+          opacity: 1,
+          duration: accordionAnimationDuration,
+          ease: 'power4.out'
+        })
+
+        // Loader Bar In
+        gsap.to("[tabs-menu-item].active [tabs-menu-element='loader-bar']", {
+          width: '100%',
+          duration: cycleInterval,
+          ease: 'none'
+        })
+
+        // Arrow In
+        gsap.to("[tabs-menu-item].active img[tabs-menu-element='arrow']", {
+          x: -12,
+          duration: 0
+        })
+        gsap.to("[tabs-menu-item].active img[tabs-menu-element='arrow']", {
+          opacity: 1,
+          x: 0,
+          duration: 0.6,
+          ease: 'power3.inOut'
+        })
+
+        // Image In
+        gsap.to(`[tabs-menu-element="image-${itemIndex}"]`, {
+          y: '0',
+          opacity: 1,
+          scale: 1,
+          duration: imageAnimationDuration,
+          ease: 'power2.out'
+        })
+      }
+
+      function closeSiblingAccordionItems (item) {
+        const itemIndex = item.attr('tabs-menu-item')
+        gsap.to('[tabs-menu-item]:not(.active)', {
+          height: 60,
+          duration: accordionAnimationDuration,
+          ease: 'power4.out'
+        })
+        gsap.to(
+          "[tabs-menu-item]:not(.active) [tabs-menu-element='tab-content']",
+          {
+            opacity: 0,
+            duration: accordionAnimationDuration,
+            ease: 'power4.out'
+          }
+        )
+
+        // Loader Bar Out
+        gsap.killTweensOf(
+          "[tabs-menu-item]:not(.active) [tabs-menu-element='loader-bar']"
+        )
+        gsap.to(
+          "[tabs-menu-item]:not(.active) [tabs-menu-element='loader-bar']",
+          {
+            width: 0,
+            duration: 0
+          }
+        )
+
+        // Arrow fade out
+        gsap.to("[tabs-menu-item]:not(.active) img[tabs-menu-element='arrow']", {
+          opacity: 0,
+          duration: 0.4,
+          ease: 'power3.out'
+        })
+
+        // Image Out
+        gsap.to(
+          `img[tabs-menu-element^=image]:not([tabs-menu-element="image-${itemIndex}"])`,
+          {
+            y: '-100%',
+            opacity: 0,
+            duration: imageAnimationDuration,
+            ease: 'power2.out'
+          }
+        )
+        gsap.to(
+          `img[tabs-menu-element^=image]:not([tabs-menu-element="image-${itemIndex}"])`,
+          {
+            y: '100%',
+            scale: 1.1,
+            duration: 0,
+            delay: imageAnimationDuration
+          }
+        )
+      }
+
+      function moveQueue () {
+        const head = queue.shift()
+        selectMenuItem($(head))
+        queue.push(head)
+      }
+
+      function createQueue (n) {
+        const firstSlice = referenceQueue.slice(0, n)
+        const secondSlice = referenceQueue.slice(n)
+        return secondSlice.concat(firstSlice)
+      }
+    }
+  }
+
+  var waypoint = new Waypoint({
+    element: document.getElementById('tabs-menu-section'),
+    handler: function (direction) {
+      rampHomepageTabs.init()
+      waypoint.destroy()
+    },
+    offset: "25%"
+  })
+</script>
